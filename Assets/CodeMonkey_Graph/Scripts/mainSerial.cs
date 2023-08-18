@@ -2,13 +2,14 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System.IO.Ports;
+using System.Globalization;
 
 namespace grafico
 {
     public class mainSerial : MonoBehaviour, IDataReceiver
     {
         private SerialPort serialPort;
-        public string serialPortName = "COM3"; 
+        public string serialPortName = "COM5"; 
         public int baudRate = 115200; 
 
         private Window_Graph_Acelerometro graphController;
@@ -16,8 +17,15 @@ namespace grafico
         private Window_Graph_Pressao graphPressao;
 
         private float lastAltura;
-        private float lastVelocidade;
+        private float lastAceleracao;
         private float lastPressao;
+        private float lastTemperatura;
+        private float lastLatitude;
+        private float lastLongitude;
+
+
+
+
 
         public event System.Action<float, float, float> OnDataReceived;
 
@@ -48,7 +56,7 @@ namespace grafico
                 try
                 {
                     string data = serialPort.ReadLine();
-                    Debug.Log("Dados reccebidos: " + data); // Imprime os dados recebidos
+                    Debug.Log("Dados reccebidos: " + data);
                                                          
                 }
                 catch (System.Exception)
@@ -70,21 +78,35 @@ namespace grafico
 
                     if (values.Length >= 3) 
                     {
-                        float altura = float.Parse(values[0]);
-                        float velocidade = float.Parse(values[1]);
-                        float pressao = float.Parse(values[2]);
 
-                        Debug.Log("Altura: " + altura + " Velocidade: " + velocidade + " Pressão: " + pressao);
+                        /* 
+                         CASO NECESSÁRIA ALTERAÇÃO
+                         
+                         */
+                        float altura = float.Parse(values[0], CultureInfo.InvariantCulture.NumberFormat);
+                        float aceleracao = float.Parse(values[1], CultureInfo.InvariantCulture.NumberFormat); //modulo formula 
+                        float pressao = float.Parse(values[2], CultureInfo.InvariantCulture.NumberFormat);
+                        float temperatura = float.Parse(values[3], CultureInfo.InvariantCulture.NumberFormat);
+                        float latitude = float.Parse(values[4], CultureInfo.InvariantCulture.NumberFormat);
+                        float longitude = float.Parse(values[5], CultureInfo.InvariantCulture.NumberFormat);
+
+
+
+                        Debug.Log("Altura: " + altura + " Aceleracao: " + aceleracao + " Pressão: " + pressao + "Temperatura" + temperatura + "Latitude" + latitude + "Longitude" + longitude);
 
                         lastAltura = altura;
-                        lastVelocidade = velocidade;
+                        lastAceleracao = aceleracao;
                         lastPressao = pressao;
+                        lastTemperatura = temperatura;
+                        lastLatitude= latitude;
+                        lastLongitude= longitude;
 
-                        graphController.ReceiveData(velocidade);
+                        graphController.ReceiveData(aceleracao);
                         graphAltura.ReceiveAltura(altura);
                         graphPressao.ReceivePressao(pressao);
+
                         // Notifica os observadores sobre os dados recebidos
-                        OnDataReceived?.Invoke(altura, velocidade, pressao);
+                        OnDataReceived?.Invoke(altura, aceleracao, pressao);
                     }
                 }
                 catch (System.Exception ex)
@@ -94,22 +116,36 @@ namespace grafico
             }
         }
 
-
         // Métodos para obter o último valor 
         public float GetLastAltura()
         {
             return lastAltura;
         }
 
-        public float GetLastVelocidade()
+        public float GetLastAceleracao()
         {
-            return lastVelocidade;
+            return lastAceleracao;
         }
 
         public float GetLastPressao()
         {
             return lastPressao;
         }
+        public float GetLastTemperatura()
+        {
+            return lastTemperatura;
+        }
+        public float GetLastLatitude()
+        {
+            return lastLatitude;
+        }
+
+        public float GetLastLongitude()
+        {
+            return lastLongitude;
+        }
+
+
         public void ReceiveAltura(float altura)
         {
         }

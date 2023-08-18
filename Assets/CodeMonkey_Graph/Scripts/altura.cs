@@ -5,7 +5,7 @@ using UnityEngine.UI;
 
 namespace grafico
 {
-    public class altura : MonoBehaviour
+    public class Altura : MonoBehaviour
     {
         public Text valorAltura; 
 

@@ -34,7 +34,7 @@ namespace grafico
 
         private void HandleDataReceived(float altura, float velocidade, float pressao)
         {
-            string logEntry = $"{Time.time}, Altura: {altura}, Velocidade: {velocidade}, Pressão: {pressao}";
+            string logEntry = $" Altura: {altura}, Velocidade: {velocidade}, Pressão: {pressao}";
             logStreamWriter.WriteLine(logEntry);
             logStreamWriter.Flush();
         }

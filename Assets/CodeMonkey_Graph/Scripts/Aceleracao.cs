@@ -5,9 +5,9 @@ using UnityEngine.UI;
 
 namespace grafico
 {
-    public class velocidade : MonoBehaviour
+    public class Aceleracao : MonoBehaviour
     {
-        public Text valorVelocidade; 
+        public Text valorAceleracao; 
 
         private mainSerial serialController; 
 
@@ -15,19 +15,19 @@ namespace grafico
         {
             
             serialController = FindObjectOfType<mainSerial>();
-            StartCoroutine(UpdateVelocityText());
+            StartCoroutine(UpdateAceleracaoText());
         }
 
-        private IEnumerator UpdateVelocityText()
+        private IEnumerator UpdateAceleracaoText()
         {
             while (true)
             {
                 if (serialController != null)
                 {
-                    float lastVelocidade = serialController.GetLastVelocidade();
-                    Debug.Log("Ultm veloc: " + lastVelocidade); 
+                    float lastAceleracao = serialController.GetLastAceleracao();
+                    Debug.Log("Ultm veloc: " + lastAceleracao); 
 
-                    valorVelocidade.text = lastVelocidade.ToString("F2") + " m/s^2"; 
+                    valorAceleracao.text = lastAceleracao.ToString("F2") + " m/s^2"; 
 
                     yield return new WaitForSeconds(1f);
                 }

@@ -1,33 +1,33 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
+using UnityEngine.UI; 
 
 namespace grafico
 {
-    public class Pressao : MonoBehaviour
+    public class Latitude : MonoBehaviour
     {
-        public Text valorPressao;
+        public Text valorLatitude; 
 
-        private mainSerial serialController;
+        private mainSerial serialController; 
 
         private void Start()
         {
+            
             serialController = FindObjectOfType<mainSerial>();
-
-            StartCoroutine(UpdatePressureText());
+            StartCoroutine(UpdateLatitudeText());
         }
 
-        private IEnumerator UpdatePressureText()
+        private IEnumerator UpdateLatitudeText()
         {
             while (true)
             {
                 if (serialController != null)
                 {
-                    float lastPressao = serialController.GetLastPressao();
-                    Debug.Log("Ultm press: " + lastPressao);
+                    float lastLatitude = serialController.GetLastLatitude();
+                    Debug.Log("Ultm lat: " + lastLatitude); 
 
-                    valorPressao.text = lastPressao.ToString("F2") + " Pa";
+                    valorLatitude.text = lastLatitude.ToString("F2") + " º"; 
 
                     yield return new WaitForSeconds(1f);
                 }

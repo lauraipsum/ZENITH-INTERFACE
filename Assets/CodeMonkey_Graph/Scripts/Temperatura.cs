@@ -1,33 +1,33 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
+using UnityEngine.UI; 
 
 namespace grafico
 {
-    public class Pressao : MonoBehaviour
+    public class Temperatura : MonoBehaviour
     {
-        public Text valorPressao;
+        public Text valorTemperatura; 
 
-        private mainSerial serialController;
+        private mainSerial serialController; 
 
         private void Start()
         {
+            
             serialController = FindObjectOfType<mainSerial>();
-
-            StartCoroutine(UpdatePressureText());
+            StartCoroutine(UpdateTemperaturaText());
         }
 
-        private IEnumerator UpdatePressureText()
+        private IEnumerator UpdateTemperaturaText()
         {
             while (true)
             {
                 if (serialController != null)
                 {
-                    float lastPressao = serialController.GetLastPressao();
-                    Debug.Log("Ultm press: " + lastPressao);
+                    float lastTemperatura = serialController.GetLastTemperatura();
+                    Debug.Log("Ultm temp: " + lastTemperatura); 
 
-                    valorPressao.text = lastPressao.ToString("F2") + " Pa";
+                    valorTemperatura.text = lastTemperatura.ToString("F2") + " ºC"; 
 
                     yield return new WaitForSeconds(1f);
                 }

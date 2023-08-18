@@ -14,7 +14,6 @@ namespace grafico
 
         private static Window_Graph_Pressao instance;
 
-
         private float yMinimum;
         private float yMaximum;
         private float graphHeight;
@@ -37,7 +36,6 @@ namespace grafico
         private Func<int, string> getAxisLabelX;
         private Func<float, string> getAxisLabelY;
         private float xSize;
-        private bool startYScaleAtZero;
 
         private mainSerial serialController;
         private List<float> receivedDataList = new List<float>();
@@ -104,12 +102,11 @@ namespace grafico
             dashTemplateY = dashContainer.Find("dashTemplateY").GetComponent<RectTransform>();
             tooltipGameObject = graphContainer.Find("tooltip").gameObject;
 
-            startYScaleAtZero = true;
             gameObjectList = new List<GameObject>();
             yLabelList = new List<RectTransform>();
             graphVisualObjectList = new List<IGraphVisualObject>();
 
-            IGraphVisual lineGraphVisual = new LineGraphVisual(graphContainer, dotSprite, Color.green, new Color(1, 1, 1, .5f));
+            IGraphVisual lineGraphVisual = new LineGraphVisual(graphContainer, dotSprite, Color.magenta, new Color(1, 1, 1, .5f));
             IGraphVisual barChartVisual = new BarChartVisual(graphContainer, Color.white, .8f);
 
 
@@ -127,9 +124,6 @@ namespace grafico
                 //int index = UnityEngine.Random.Range(0, valueList.Count);
                 UpdateValue(index, valueList[index] + UnityEngine.Random.Range(1, 3));
             }, .02f);
-
-
-
 
         }
 
@@ -646,6 +640,8 @@ namespace grafico
 
 
 
+        private int currentIndex = 0; // Controla o índice do valor mais recente na lista
+        private float elapsedTime = 0f; // Controla o tempo decorrido desde a última atualização
 
 
         private void Update()
@@ -654,8 +650,13 @@ namespace grafico
             {
                 if (serialController != null)
                 {
-                    float lastPressao = serialController.GetLastPressao();
-                    UpdateGraphWithValue(lastPressao);
+                    float lastAltura = serialController.GetLastAltura();
+                    UpdateElapsedTime();
+                    if (elapsedTime >= 1f)
+                    {
+                        UpdateGraphWithNewValue(lastAltura);
+                        ResetElapsedTime();
+                    }
                 }
             }
             catch (System.Exception)
@@ -665,14 +666,42 @@ namespace grafico
         }
 
 
+
         private void UpdateGraphWithValue(float value)
         {
             float xPosition = 0;
             float yPosition = ((value - yMinimum) / (yMaximum - yMinimum)) * graphHeight;
 
+            Debug.Log("Valor recebido: " + value + " | yPosition: " + yPosition); // Verifica os valores
+
             IGraphVisualObject graphVisualObject = graphVisual.CreateGraphVisualObject(new Vector2(xPosition, yPosition), xSize, value.ToString());
             graphVisualObjectList.Add(graphVisualObject);
         }
+
+
+        private void UpdateElapsedTime()
+        {
+            elapsedTime += Time.deltaTime;
+        }
+
+        private void ResetElapsedTime()
+        {
+            elapsedTime = 0f;
+        }
+
+        private void UpdateGraphWithNewValue(float newValue)
+        {
+            for (int i = valueList.Count - 1; i > 0; i--)
+            {
+                int targetIndex = (currentIndex + i) % valueList.Count;
+                int sourceIndex = (currentIndex + i - 1) % valueList.Count;
+                valueList[targetIndex] = valueList[sourceIndex];
+            }
+
+
+            valueList[currentIndex] = Mathf.RoundToInt(newValue);
+        }
+
 
     }
 

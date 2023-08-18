@@ -37,10 +37,12 @@ namespace grafico
         private Func<int, string> getAxisLabelX;
         private Func<float, string> getAxisLabelY;
         private float xSize;
-        private bool startYScaleAtZero;
 
         private mainSerial serialController;
-        private List<float> receivedDataList = new List<float>();
+        public void ReceiveData(float value)
+        {
+            UpdateGraphWithValue(value);
+        }
 
         public interface IDataReceiver
         {
@@ -49,11 +51,6 @@ namespace grafico
         public void ReceiveAltura(float altura)
         {
 
-        }
-        public void ReceiveData(float value)
-        {
-
-            UpdateGraphWithValue(value);
         }
         public void ReceivePressao(float pressao)
         {
@@ -104,12 +101,11 @@ namespace grafico
             dashTemplateY = dashContainer.Find("dashTemplateY").GetComponent<RectTransform>();
             tooltipGameObject = graphContainer.Find("tooltip").gameObject;
 
-            startYScaleAtZero = true;
             gameObjectList = new List<GameObject>();
             yLabelList = new List<RectTransform>();
             graphVisualObjectList = new List<IGraphVisualObject>();
 
-            IGraphVisual lineGraphVisual = new LineGraphVisual(graphContainer, dotSprite, Color.green, new Color(1, 1, 1, .5f));
+            IGraphVisual lineGraphVisual = new LineGraphVisual(graphContainer, dotSprite, Color.magenta, new Color(1, 1, 1, .5f));
             IGraphVisual barChartVisual = new BarChartVisual(graphContainer, Color.white, .8f);
 
 
@@ -117,7 +113,7 @@ namespace grafico
 
             List<int> valueList = new List<int>() { 0, 0, 0, 0, 0 };
 
-            ShowGraph(valueList, lineGraphVisual, -1, (int _i) => (_i + 1) + "s", (float _f) => Mathf.RoundToInt(_f) + "m");
+            ShowGraph(valueList, lineGraphVisual, -1, (int _i) => (_i + 1) + "s", (float _f) => Mathf.RoundToInt(_f) + "Pa");
 
             int index = 0;
             FunctionPeriodic.Create(() => {
@@ -127,9 +123,6 @@ namespace grafico
                 //int index = UnityEngine.Random.Range(0, valueList.Count);
                 UpdateValue(index, valueList[index] + UnityEngine.Random.Range(1, 3));
             }, .02f);
-
-
-
 
         }
 
@@ -166,31 +159,6 @@ namespace grafico
         private void HideTooltip()
         {
             tooltipGameObject.SetActive(false);
-        }
-
-        private void SetGetAxisLabelX(Func<int, string> getAxisLabelX)
-        {
-            ShowGraph(this.valueList, this.graphVisual, this.maxVisibleValueAmount, getAxisLabelX, this.getAxisLabelY);
-        }
-
-        private void SetGetAxisLabelY(Func<float, string> getAxisLabelY)
-        {
-            ShowGraph(this.valueList, this.graphVisual, this.maxVisibleValueAmount, this.getAxisLabelX, getAxisLabelY);
-        }
-
-        private void IncreaseVisibleAmount()
-        {
-            ShowGraph(this.valueList, this.graphVisual, this.maxVisibleValueAmount + 1, this.getAxisLabelX, this.getAxisLabelY);
-        }
-
-        private void DecreaseVisibleAmount()
-        {
-            ShowGraph(this.valueList, this.graphVisual, this.maxVisibleValueAmount - 1, this.getAxisLabelX, this.getAxisLabelY);
-        }
-
-        private void SetGraphVisual(IGraphVisual graphVisual)
-        {
-            ShowGraph(this.valueList, graphVisual, this.maxVisibleValueAmount, this.getAxisLabelX, this.getAxisLabelY);
         }
 
         private void ShowGraph(List<int> valueList, IGraphVisual graphVisual, int maxVisibleValueAmount = -1, Func<int, string> getAxisLabelX = null, Func<float, string> getAxisLabelY = null)
@@ -385,7 +353,6 @@ namespace grafico
 
         private interface IGraphVisual
         {
-
             IGraphVisualObject CreateGraphVisualObject(Vector2 graphPosition, float graphPositionWidth, string tooltipText);
             void CleanUp();
 
@@ -394,7 +361,6 @@ namespace grafico
 
         private interface IGraphVisualObject
         {
-
             void SetGraphVisualObjectInfo(Vector2 graphPosition, float graphPositionWidth, string tooltipText);
             void CleanUp();
 
@@ -644,8 +610,8 @@ namespace grafico
 
         }
 
-
-
+        private int currentIndex = 0; // Controla o índice do valor mais recente na lista
+        private float elapsedTime = 0f; // Controla o tempo decorrido desde a última atualização
 
 
         private void Update()
@@ -655,7 +621,12 @@ namespace grafico
                 if (serialController != null)
                 {
                     float lastAltura = serialController.GetLastAltura();
-                    UpdateGraphWithValue(lastAltura);
+                    UpdateElapsedTime();
+                    if (elapsedTime >= 1f)
+                    {
+                        UpdateGraphWithNewValue(lastAltura);
+                        ResetElapsedTime();
+                    }
                 }
             }
             catch (System.Exception)
@@ -665,17 +636,46 @@ namespace grafico
         }
 
 
+
+
+
+        private void UpdateElapsedTime()
+        {
+            elapsedTime += Time.deltaTime;
+        }
+
+        private void ResetElapsedTime()
+        {
+            elapsedTime = 0f;
+        }
+
         private void UpdateGraphWithValue(float value)
         {
-            float xPosition = 0; 
+            float xPosition = (currentIndex + 1) * xSize; // Atualiza xPosition com base no índice atual
             float yPosition = ((value - yMinimum) / (yMaximum - yMinimum)) * graphHeight;
 
-            Debug.Log("Valor recebido: " + value + " | yPosition: " + yPosition); // Verifica os valores
-
+            Debug.Log("Valor recebido: " + value + " | yPosition: " + yPosition);
 
             IGraphVisualObject graphVisualObject = graphVisual.CreateGraphVisualObject(new Vector2(xPosition, yPosition), xSize, value.ToString());
             graphVisualObjectList.Add(graphVisualObject);
         }
+
+        private void UpdateGraphWithNewValue(float newValue)
+        {
+            currentIndex = (currentIndex + 1) % valueList.Count;
+
+            // ... (atualize os valores na valueList conforme a lógica necessária)
+
+            float yPosition = ((newValue - yMinimum) / (yMaximum - yMinimum)) * graphHeight;
+            float xPosition = (currentIndex + 1) * xSize; // Atualiza xPosition com base no índice atual
+            IGraphVisualObject graphVisualObject = graphVisual.CreateGraphVisualObject(new Vector2(xPosition, yPosition), xSize, newValue.ToString());
+            graphVisualObjectList.Add(graphVisualObject);
+
+            UpdateValue(currentIndex, Mathf.RoundToInt(newValue)); // Atualiza a exibição do gráfico
+        }
+
+
+
 
     }
 

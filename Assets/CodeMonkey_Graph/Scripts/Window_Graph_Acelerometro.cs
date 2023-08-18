@@ -5,10 +5,11 @@ using UnityEngine;
 using UnityEngine.UI;
 using CodeMonkey.Utils;
 using System.IO.Ports;
+using static grafico.Window_Graph_Acelerometro;
 
-namespace grafico 
+namespace grafico
 {
-    public class Window_Graph_Acelerometro : MonoBehaviour, IDataReceiver
+    public class Window_Graph_Acelerometro: MonoBehaviour, IDataReceiver
     {
 
         private static Window_Graph_Acelerometro instance;
@@ -36,30 +37,26 @@ namespace grafico
         private Func<int, string> getAxisLabelX;
         private Func<float, string> getAxisLabelY;
         private float xSize;
-        private bool startYScaleAtZero;
 
         private mainSerial serialController;
         private List<float> receivedDataList = new List<float>();
 
         public interface IDataReceiver
         {
-            void ReceiveAltura(float altura);
-            void ReceiveData(float value);
-            void ReceivePressao(float pressao);
+            void ReceiveAltura(float value);
         }
-
         public void ReceiveAltura(float altura)
         {
-            
+
         }
         public void ReceiveData(float value)
         {
-            
+
             UpdateGraphWithValue(value);
         }
         public void ReceivePressao(float pressao)
         {
-            
+
         }
 
         public void SetSerialController(mainSerial controller)
@@ -67,8 +64,8 @@ namespace grafico
             serialController = controller;
         }
 
-        private float currentValue = 0;  
-        private float targetValue = 0;   
+        private float currentValue = 0;
+        private float targetValue = 0;
 
         private IEnumerator StartGraphAnimation(List<int> valueList, IGraphVisual graphVisual, int maxVisiblePoints, Func<int, string> getAxisLabelX, Func<float, string> getAxisLabelY)
         {
@@ -76,22 +73,20 @@ namespace grafico
 
             while (index < valueList.Count)
             {
-               
+
                 targetValue = valueList[index];
 
-          
                 while (currentValue < targetValue)
                 {
-                    currentValue += Time.deltaTime * 10f;  
+                    currentValue += Time.deltaTime * 10f;
                     currentValue = Mathf.Min(currentValue, targetValue);
 
-           
                     UpdateValue(index, Mathf.RoundToInt(currentValue));
                     yield return null;
                 }
 
                 index++;
-                yield return new WaitForSeconds(0.1f);  
+                yield return new WaitForSeconds(0.1f);
             }
         }
 
@@ -100,7 +95,6 @@ namespace grafico
         {
             instance = this;
 
-  
             graphContainer = transform.Find("graphContainer").GetComponent<RectTransform>();
             labelTemplateX = graphContainer.Find("labelTemplateX").GetComponent<RectTransform>();
             labelTemplateY = graphContainer.Find("labelTemplateY").GetComponent<RectTransform>();
@@ -109,22 +103,19 @@ namespace grafico
             dashTemplateY = dashContainer.Find("dashTemplateY").GetComponent<RectTransform>();
             tooltipGameObject = graphContainer.Find("tooltip").gameObject;
 
-            startYScaleAtZero = true;
             gameObjectList = new List<GameObject>();
             yLabelList = new List<RectTransform>();
             graphVisualObjectList = new List<IGraphVisualObject>();
 
-            IGraphVisual lineGraphVisual = new LineGraphVisual(graphContainer, dotSprite, Color.green, new Color(1, 1, 1, .5f));
+            IGraphVisual lineGraphVisual = new LineGraphVisual(graphContainer, dotSprite, Color.magenta, new Color(1, 1, 1, .5f));
             IGraphVisual barChartVisual = new BarChartVisual(graphContainer, Color.white, .8f);
 
-   
 
             HideTooltip();
 
-  
             List<int> valueList = new List<int>() { 0, 0, 0, 0, 0 };
 
-            ShowGraph(valueList, lineGraphVisual, -1, (int _i) => (_i + 1) + "s", (float _f) => Mathf.RoundToInt(_f) + "m/s^2");
+            ShowGraph(valueList, lineGraphVisual, -1, (int _i) => (_i + 1) + "s", (float _f) => Mathf.RoundToInt(_f) + "Pa");
 
             int index = 0;
             FunctionPeriodic.Create(() => {
@@ -134,9 +125,6 @@ namespace grafico
                 //int index = UnityEngine.Random.Range(0, valueList.Count);
                 UpdateValue(index, valueList[index] + UnityEngine.Random.Range(1, 3));
             }, .02f);
-
-
-
 
         }
 
@@ -162,8 +150,6 @@ namespace grafico
             );
 
             tooltipGameObject.transform.Find("background").GetComponent<RectTransform>().sizeDelta = backgroundSize;
-
-            // UI Visibility Sorting based on Hierarchy, SetAsLastSibling in order to show up on top
             tooltipGameObject.transform.SetAsLastSibling();
         }
 
@@ -211,18 +197,17 @@ namespace grafico
 
             if (maxVisibleValueAmount <= 0)
             {
-                // Show all if no amount specified
+
                 maxVisibleValueAmount = valueList.Count;
             }
             if (maxVisibleValueAmount > valueList.Count)
             {
-                // Validate the amount to show the maximum
+
                 maxVisibleValueAmount = valueList.Count;
             }
 
             this.maxVisibleValueAmount = maxVisibleValueAmount;
 
-            // Test for label defaults
             if (getAxisLabelX == null)
             {
                 getAxisLabelX = delegate (int _i) { return _i.ToString(); };
@@ -232,7 +217,7 @@ namespace grafico
                 getAxisLabelY = delegate (float _f) { return Mathf.RoundToInt(_f).ToString(); };
             }
 
-            // Clean up previous graph
+
             foreach (GameObject gameObject in gameObjectList)
             {
                 Destroy(gameObject);
@@ -248,29 +233,28 @@ namespace grafico
 
             graphVisual.CleanUp();
 
-            // Grab the width and height from the container
+
             float graphWidth = graphContainer.sizeDelta.x;
             float graphHeight = graphContainer.sizeDelta.y;
 
             float yMinimum, yMaximum;
             CalculateYScale(out yMinimum, out yMaximum);
 
-            // Set the distance between each point on the graph 
+
             xSize = graphWidth / (maxVisibleValueAmount + 1);
 
-            // Cycle through all visible data points
+
             int xIndex = 0;
             for (int i = Mathf.Max(valueList.Count - maxVisibleValueAmount, 0); i < valueList.Count; i++)
             {
                 float xPosition = xSize + xIndex * xSize;
                 float yPosition = ((valueList[i] - yMinimum) / (yMaximum - yMinimum)) * graphHeight;
 
-                // Add data point visual
                 string tooltipText = getAxisLabelY(valueList[i]);
                 IGraphVisualObject graphVisualObject = graphVisual.CreateGraphVisualObject(new Vector2(xPosition, yPosition), xSize, tooltipText);
                 graphVisualObjectList.Add(graphVisualObject);
 
-                // Duplicate the x label template
+
                 RectTransform labelX = Instantiate(labelTemplateX);
                 labelX.SetParent(graphContainer, false);
                 labelX.gameObject.SetActive(true);
@@ -278,7 +262,7 @@ namespace grafico
                 labelX.GetComponent<Text>().text = getAxisLabelX(i);
                 gameObjectList.Add(labelX.gameObject);
 
-                // Duplicate the x dash template
+
                 RectTransform dashX = Instantiate(dashTemplateX);
                 dashX.SetParent(dashContainer, false);
                 dashX.gameObject.SetActive(true);
@@ -288,11 +272,11 @@ namespace grafico
                 xIndex++;
             }
 
-            // Set up separators on the y axis
+
             int separatorCount = 10;
             for (int i = 0; i <= separatorCount; i++)
             {
-                // Duplicate the label template
+
                 RectTransform labelY = Instantiate(labelTemplateY);
                 labelY.SetParent(graphContainer, false);
                 labelY.gameObject.SetActive(true);
@@ -302,7 +286,7 @@ namespace grafico
                 yLabelList.Add(labelY);
                 gameObjectList.Add(labelY.gameObject);
 
-                // Duplicate the dash template
+
                 RectTransform dashY = Instantiate(dashTemplateY);
                 dashY.SetParent(dashContainer, false);
                 dashY.gameObject.SetActive(true);
@@ -328,25 +312,24 @@ namespace grafico
 
             if (!yScaleChanged)
             {
-                // Y Scale did not change, update only this value
+
                 float xPosition = xSize + index * xSize;
                 float yPosition = ((value - yMinimum) / (yMaximum - yMinimum)) * graphHeight;
 
-                // Add data point visual
+
                 string tooltipText = getAxisLabelY(value);
                 graphVisualObjectList[index].SetGraphVisualObjectInfo(new Vector2(xPosition, yPosition), xSize, tooltipText);
             }
             else
             {
-                // Y scale changed, update whole graph and y axis labels
-                // Cycle through all visible data points
+
                 int xIndex = 0;
                 for (int i = Mathf.Max(valueList.Count - maxVisibleValueAmount, 0); i < valueList.Count; i++)
                 {
                     float xPosition = xSize + xIndex * xSize;
                     float yPosition = ((valueList[i] - yMinimum) / (yMaximum - yMinimum)) * graphHeight;
 
-                    // Add data point visual
+
                     string tooltipText = getAxisLabelY(valueList[i]);
                     graphVisualObjectList[xIndex].SetGraphVisualObjectInfo(new Vector2(xPosition, yPosition), xSize, tooltipText);
 
@@ -363,7 +346,7 @@ namespace grafico
 
         private void CalculateYScale(out float yMinimum, out float yMaximum)
         {
-            // Identify y Min and Max values
+
             yMaximum = valueList[0];
             yMinimum = valueList[0];
 
@@ -388,16 +371,13 @@ namespace grafico
             yMaximum = yMaximum + (yDifference * 0.2f);
             yMinimum = yMinimum - (yDifference * 0.2f);
 
-            yMinimum = 0f; // Start the graph at zero
 
 
             this.yMinimum = yMinimum;
             this.yMaximum = yMaximum;
         }
 
-        /*
-         * Interface definition for showing visual for a data point
-         * */
+
         private interface IGraphVisual
         {
 
@@ -406,9 +386,7 @@ namespace grafico
 
         }
 
-        /*
-         * Represents a single Visual Object in the graph
-         * */
+
         private interface IGraphVisualObject
         {
 
@@ -417,10 +395,6 @@ namespace grafico
 
         }
 
-
-        /*
-         * Displays data points as a Bar Chart
-         * */
         private class BarChartVisual : IGraphVisual
         {
 
@@ -488,12 +462,12 @@ namespace grafico
 
                     Button_UI barButtonUI = barGameObject.GetComponent<Button_UI>();
 
-                    // Show Tooltip on Mouse Over
+
                     barButtonUI.MouseOverOnceFunc = () => {
                         ShowTooltip_Static(tooltipText, graphPosition);
                     };
 
-                    // Hide Tooltip on Mouse Out
+
                     barButtonUI.MouseOutOnceFunc = () => {
                         HideTooltip_Static();
                     };
@@ -510,9 +484,6 @@ namespace grafico
         }
 
 
-        /*
-         * Displays data points as a Line Graph
-         * */
         private class LineGraphVisual : IGraphVisual
         {
 
@@ -568,7 +539,7 @@ namespace grafico
                 rectTransform.anchorMin = new Vector2(0, 0);
                 rectTransform.anchorMax = new Vector2(0, 0);
 
-                // Add Button_UI Component which captures UI Mouse Events
+
                 Button_UI dotButtonUI = gameObject.AddComponent<Button_UI>();
 
                 return gameObject;
@@ -626,12 +597,12 @@ namespace grafico
 
                     Button_UI dotButtonUI = dotGameObject.GetComponent<Button_UI>();
 
-                    // Show Tooltip on Mouse Over
+
                     dotButtonUI.MouseOverOnceFunc = () => {
                         ShowTooltip_Static(tooltipText, graphPosition);
                     };
 
-                    // Hide Tooltip on Mouse Out
+
                     dotButtonUI.MouseOutOnceFunc = () => {
                         HideTooltip_Static();
                     };
@@ -668,8 +639,8 @@ namespace grafico
 
         }
 
-
-
+        private int currentIndex = 0; // Controla o índice do valor mais recente na lista
+        private float elapsedTime = 0f; // Controla o tempo decorrido desde a última atualização
 
 
         private void Update()
@@ -678,25 +649,58 @@ namespace grafico
             {
                 if (serialController != null)
                 {
-                    float lastVelocidade = serialController.GetLastVelocidade();
-                    UpdateGraphWithValue(lastVelocidade);
+                    float lastAltura = serialController.GetLastAltura();
+                    UpdateElapsedTime();
+                    if (elapsedTime >= 1f)
+                    {
+                        UpdateGraphWithNewValue(lastAltura);
+                        ResetElapsedTime();
+                    }
                 }
             }
             catch (System.Exception)
             {
-                
+
             }
         }
 
 
+
         private void UpdateGraphWithValue(float value)
         {
-            float xPosition = 0; // Since you're plotting only one value
+            float xPosition = 0;
             float yPosition = ((value - yMinimum) / (yMaximum - yMinimum)) * graphHeight;
+
+            Debug.Log("Valor recebido: " + value + " | yPosition: " + yPosition); // Verifica os valores
 
             IGraphVisualObject graphVisualObject = graphVisual.CreateGraphVisualObject(new Vector2(xPosition, yPosition), xSize, value.ToString());
             graphVisualObjectList.Add(graphVisualObject);
         }
+
+
+        private void UpdateElapsedTime()
+        {
+            elapsedTime += Time.deltaTime;
+        }
+
+        private void ResetElapsedTime()
+        {
+            elapsedTime = 0f;
+        }
+
+        private void UpdateGraphWithNewValue(float newValue)
+        {
+            for (int i = valueList.Count - 1; i > 0; i--)
+            {
+                int targetIndex = (currentIndex + i) % valueList.Count;
+                int sourceIndex = (currentIndex + i - 1) % valueList.Count;
+                valueList[targetIndex] = valueList[sourceIndex];
+            }
+
+
+            valueList[currentIndex] = Mathf.RoundToInt(newValue);
+        }
+
 
     }
 
