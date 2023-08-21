@@ -73,20 +73,20 @@ namespace grafico
                     if (values.Length >= 3) 
                     {
 
-                        float altura = float.Parse(values[7], CultureInfo.InvariantCulture.NumberFormat); //altitude barometro,
+                        float altura = float.Parse(values[0], CultureInfo.InvariantCulture.NumberFormat); //altitude barometro,
 
-                        float aceleracao1 = float.Parse(values[0], CultureInfo.InvariantCulture.NumberFormat); 
-                        float aceleracao2 = float.Parse(values[1], CultureInfo.InvariantCulture.NumberFormat);
-                        float aceleracao3 = float.Parse(values[2], CultureInfo.InvariantCulture.NumberFormat);
-                        float aceleracao = Mathf.Sqrt(aceleracao1 + aceleracao2 + aceleracao3); //raiz(aceleracaox^2 + aceleracaoy^2 + aceleracaoz^2)
+                        float aceleracaox = float.Parse(values[0], CultureInfo.InvariantCulture.NumberFormat); 
+                        float aceleracaoy = float.Parse(values[1], CultureInfo.InvariantCulture.NumberFormat);
+                        float aceleracaoz = float.Parse(values[2], CultureInfo.InvariantCulture.NumberFormat);
+                        float aceleracao = Mathf.Sqrt((aceleracaox* aceleracaox) + (aceleracaoy*aceleracaoy) + (aceleracaoz* aceleracaoz)); //raiz(aceleracaox^2 + aceleracaoy^2 + aceleracaoz^2)
                         
-                        float pressao = float.Parse(values[6], CultureInfo.InvariantCulture.NumberFormat);
+                        float pressao = float.Parse(values[0], CultureInfo.InvariantCulture.NumberFormat);
 
-                        float temperatura = float.Parse(values[8], CultureInfo.InvariantCulture.NumberFormat);
+                        float temperatura = float.Parse(values[1], CultureInfo.InvariantCulture.NumberFormat);
 
-                        float latitude = float.Parse(values[10], CultureInfo.InvariantCulture.NumberFormat);
+                        float latitude = float.Parse(values[1], CultureInfo.InvariantCulture.NumberFormat);
 
-                        float longitude = float.Parse(values[11], CultureInfo.InvariantCulture.NumberFormat);
+                        float longitude = float.Parse(values[1], CultureInfo.InvariantCulture.NumberFormat);
 
                         Debug.Log("Altura: " + altura + " Aceleracao: " + aceleracao + " Pressão: " + pressao + "Temperatura" + temperatura + "Latitude" + latitude + "Longitude" + longitude);
 
