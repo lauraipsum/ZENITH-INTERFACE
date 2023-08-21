@@ -25,7 +25,7 @@ namespace grafico
                 if (serialController != null)
                 {
                     float lastPressao = serialController.GetLastPressao();
-                    Debug.Log("Ultm press: " + lastPressao);
+
 
                     valorPressao.text = lastPressao.ToString("F2") + " Pa";
 

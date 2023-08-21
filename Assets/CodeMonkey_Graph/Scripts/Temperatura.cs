@@ -25,7 +25,7 @@ namespace grafico
                 if (serialController != null)
                 {
                     float lastTemperatura = serialController.GetLastTemperatura();
-                    Debug.Log("Ultm temp: " + lastTemperatura); 
+
 
                     valorTemperatura.text = lastTemperatura.ToString("F2") + " ºC"; 
 

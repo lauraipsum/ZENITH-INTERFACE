@@ -25,7 +25,6 @@ namespace grafico
                 if (serialController != null)
                 {
                     float lastLongitude = serialController.GetLastLongitude();
-                    Debug.Log("Ultm temp: " + lastLongitude); 
 
                     valorLongitude.text = lastLongitude.ToString("F2") + " º"; 
 

@@ -7,7 +7,7 @@ namespace grafico
     public interface IDataReceiver
     {
         void ReceiveAltura(float altura);
-        void ReceiveData(float value);
+        void ReceiveAceleracao(float aceleracao);
         void ReceivePressao(float pressao);
     }
 }

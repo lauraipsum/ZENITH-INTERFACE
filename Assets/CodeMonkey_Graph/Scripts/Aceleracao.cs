@@ -25,7 +25,6 @@ namespace grafico
                 if (serialController != null)
                 {
                     float lastAceleracao = serialController.GetLastAceleracao();
-                    Debug.Log("Ultm veloc: " + lastAceleracao); 
 
                     valorAceleracao.text = lastAceleracao.ToString("F2") + " m/s^2"; 
 

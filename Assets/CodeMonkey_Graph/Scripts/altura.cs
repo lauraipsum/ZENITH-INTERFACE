@@ -28,7 +28,6 @@ namespace grafico
                 {
                    
                     float lastAltura = serialController.GetLastAltura();
-                    Debug.Log("Ultm alt: " + lastAltura);
 
                     valorAltura.text = lastAltura.ToString("F2") + " m"; 
 

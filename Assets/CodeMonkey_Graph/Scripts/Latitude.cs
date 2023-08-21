@@ -25,7 +25,7 @@ namespace grafico
                 if (serialController != null)
                 {
                     float lastLatitude = serialController.GetLastLatitude();
-                    Debug.Log("Ultm lat: " + lastLatitude); 
+
 
                     valorLatitude.text = lastLatitude.ToString("F2") + " º"; 
 

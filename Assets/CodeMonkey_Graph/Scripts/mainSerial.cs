@@ -9,10 +9,10 @@ namespace grafico
     public class mainSerial : MonoBehaviour, IDataReceiver
     {
         private SerialPort serialPort;
-        public string serialPortName = "COM5"; 
+        public string serialPortName = "COM3"; 
         public int baudRate = 115200; 
 
-        private Window_Graph_Acelerometro graphController;
+        private Window_Graph_Aceleracao graphAceleracao;
         private Window_Graph_Altura graphAltura;
         private Window_Graph_Pressao graphPressao;
 
@@ -22,10 +22,6 @@ namespace grafico
         private float lastTemperatura;
         private float lastLatitude;
         private float lastLongitude;
-
-
-
-
 
         public event System.Action<float, float, float> OnDataReceived;
 
@@ -42,14 +38,12 @@ namespace grafico
                 Debug.LogError("Erro ao abrir Porta Serial " + serialPortName);
             }
 
-            graphController = FindObjectOfType<Window_Graph_Acelerometro>();
+            
             graphAltura = FindObjectOfType<Window_Graph_Altura>();
+            graphAceleracao = FindObjectOfType<Window_Graph_Aceleracao>();
             graphPressao = FindObjectOfType<Window_Graph_Pressao>();
 
-            if (graphController != null)
-            {
-                graphController.SetSerialController(this); // Passa a referência da instância de mainSerial
-            }
+
             if (serialPort.IsOpen)
             {
                 Debug.Log("PORTA ABERTA");
@@ -79,18 +73,17 @@ namespace grafico
                     if (values.Length >= 3) 
                     {
 
-                        /* 
-                         CASO NECESSÁRIA ALTERAÇÃO
-                         
-                         */
                         float altura = float.Parse(values[0], CultureInfo.InvariantCulture.NumberFormat);
-                        float aceleracao = float.Parse(values[1], CultureInfo.InvariantCulture.NumberFormat); //modulo formula 
-                        float pressao = float.Parse(values[2], CultureInfo.InvariantCulture.NumberFormat);
-                        float temperatura = float.Parse(values[3], CultureInfo.InvariantCulture.NumberFormat);
-                        float latitude = float.Parse(values[4], CultureInfo.InvariantCulture.NumberFormat);
-                        float longitude = float.Parse(values[5], CultureInfo.InvariantCulture.NumberFormat);
 
-
+                        float aceleracao1 = float.Parse(values[0], CultureInfo.InvariantCulture.NumberFormat); 
+                        float aceleracao2 = float.Parse(values[1], CultureInfo.InvariantCulture.NumberFormat);
+                        float aceleracao3 = float.Parse(values[2], CultureInfo.InvariantCulture.NumberFormat);
+                        float aceleracao = Mathf.Sqrt(aceleracao1 + aceleracao2 + aceleracao3); //raiz(aceleracaox^2 + aceleracaoy^2 + aceleracaoz^2)
+                        
+                        float pressao = float.Parse(values[0], CultureInfo.InvariantCulture.NumberFormat);
+                        float temperatura = float.Parse(values[1], CultureInfo.InvariantCulture.NumberFormat);
+                        float latitude = float.Parse(values[1], CultureInfo.InvariantCulture.NumberFormat);
+                        float longitude = float.Parse(values[1], CultureInfo.InvariantCulture.NumberFormat);
 
                         Debug.Log("Altura: " + altura + " Aceleracao: " + aceleracao + " Pressão: " + pressao + "Temperatura" + temperatura + "Latitude" + latitude + "Longitude" + longitude);
 
@@ -101,8 +94,8 @@ namespace grafico
                         lastLatitude= latitude;
                         lastLongitude= longitude;
 
-                        graphController.ReceiveData(aceleracao);
                         graphAltura.ReceiveAltura(altura);
+                        graphAceleracao.ReceiveAceleracao(aceleracao);
                         graphPressao.ReceivePressao(pressao);
 
                         // Notifica os observadores sobre os dados recebidos
@@ -149,7 +142,7 @@ namespace grafico
         public void ReceiveAltura(float altura)
         {
         }
-        public void ReceiveData(float value)
+        public void ReceiveAceleracao(float aceleracao)
         {
         }
         public void ReceivePressao(float pressao)

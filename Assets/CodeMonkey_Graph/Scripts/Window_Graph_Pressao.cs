@@ -9,14 +9,11 @@ using static grafico.Window_Graph_Pressao;
 
 namespace grafico
 {
-    public class Window_Graph_Pressao : MonoBehaviour, IDataReceiver
+
+    public class Window_Graph_Pressao : MonoBehaviour
     {
 
         private static Window_Graph_Pressao instance;
-
-        private float yMinimum;
-        private float yMaximum;
-        private float graphHeight;
 
         [SerializeField] private Sprite dotSprite;
         private RectTransform graphContainer;
@@ -36,59 +33,38 @@ namespace grafico
         private Func<int, string> getAxisLabelX;
         private Func<float, string> getAxisLabelY;
         private float xSize;
+        private bool startYScaleAtZero;
+
+        private float receivedPressao;
+
+
+        private int currentIndex;
+        private float updateInterval = 1f; // Intervalo em segundos para atualizar os valores
+
 
         private mainSerial serialController;
-        private List<float> receivedDataList = new List<float>();
-
         public interface IDataReceiver
         {
-            void ReceivePressao(float value);
+            void ReceivePressao(float Pressao);
         }
+
         public void ReceiveAltura(float altura)
         {
 
         }
-        public void ReceiveData(float value)
+        public void ReceiveAceleracao(float aceleracao)
         {
-
-            UpdateGraphWithValue(value);
+            
         }
         public void ReceivePressao(float pressao)
         {
-
+            receivedPressao = pressao;
         }
 
         public void SetSerialController(mainSerial controller)
         {
             serialController = controller;
         }
-
-        private float currentValue = 0;
-        private float targetValue = 0;
-
-        private IEnumerator StartGraphAnimation(List<int> valueList, IGraphVisual graphVisual, int maxVisiblePoints, Func<int, string> getAxisLabelX, Func<float, string> getAxisLabelY)
-        {
-            int index = 0;
-
-            while (index < valueList.Count)
-            {
-
-                targetValue = valueList[index];
-
-                while (currentValue < targetValue)
-                {
-                    currentValue += Time.deltaTime * 10f;
-                    currentValue = Mathf.Min(currentValue, targetValue);
-
-                    UpdateValue(index, Mathf.RoundToInt(currentValue));
-                    yield return null;
-                }
-
-                index++;
-                yield return new WaitForSeconds(0.1f);
-            }
-        }
-
 
         private void Awake()
         {
@@ -102,6 +78,7 @@ namespace grafico
             dashTemplateY = dashContainer.Find("dashTemplateY").GetComponent<RectTransform>();
             tooltipGameObject = graphContainer.Find("tooltip").gameObject;
 
+            startYScaleAtZero = true;
             gameObjectList = new List<GameObject>();
             yLabelList = new List<RectTransform>();
             graphVisualObjectList = new List<IGraphVisualObject>();
@@ -109,21 +86,18 @@ namespace grafico
             IGraphVisual lineGraphVisual = new LineGraphVisual(graphContainer, dotSprite, Color.magenta, new Color(1, 1, 1, .5f));
             IGraphVisual barChartVisual = new BarChartVisual(graphContainer, Color.white, .8f);
 
-
             HideTooltip();
 
-            List<int> valueList = new List<int>() { 0, 0, 0, 0 , 0};
+            List<int> valueList = new List<int>() { 0, 0, 0, 0, 0 };
 
-            ShowGraph(valueList, lineGraphVisual, -1, (int _i) => (_i + 1) + "s", (float _f) => Mathf.RoundToInt(_f) + "Pa");
+            ShowGraph(valueList, lineGraphVisual, -1, (int _i) => "s ", (float _f) => Mathf.RoundToInt(_f) + " Pa");
 
-            int index = 0;
+            currentIndex = valueList.Count - 1;// Começar pelo último ponto
+
             FunctionPeriodic.Create(() => {
-                index = (index + 1) % valueList.Count;
-            }, .1f);
-            FunctionPeriodic.Create(() => {
-                //int index = UnityEngine.Random.Range(0, valueList.Count);
-                UpdateValue(index, valueList[index] + UnityEngine.Random.Range(1, 3));
-            }, .02f);
+                UpdateValues();
+                ShowGraph(valueList, graphVisual, maxVisibleValueAmount, getAxisLabelX, getAxisLabelY);
+            }, updateInterval);
 
         }
 
@@ -134,7 +108,7 @@ namespace grafico
 
         private void ShowTooltip(string tooltipText, Vector2 anchoredPosition)
         {
-
+            // Show Tooltip GameObject
             tooltipGameObject.SetActive(true);
 
             tooltipGameObject.GetComponent<RectTransform>().anchoredPosition = anchoredPosition;
@@ -149,6 +123,7 @@ namespace grafico
             );
 
             tooltipGameObject.transform.Find("background").GetComponent<RectTransform>().sizeDelta = backgroundSize;
+
             tooltipGameObject.transform.SetAsLastSibling();
         }
 
@@ -196,17 +171,18 @@ namespace grafico
 
             if (maxVisibleValueAmount <= 0)
             {
-
+                // Show all if no amount specified
                 maxVisibleValueAmount = valueList.Count;
             }
             if (maxVisibleValueAmount > valueList.Count)
             {
-
+                // Validate the amount to show the maximum
                 maxVisibleValueAmount = valueList.Count;
             }
 
             this.maxVisibleValueAmount = maxVisibleValueAmount;
 
+            // Test for label defaults
             if (getAxisLabelX == null)
             {
                 getAxisLabelX = delegate (int _i) { return _i.ToString(); };
@@ -216,7 +192,7 @@ namespace grafico
                 getAxisLabelY = delegate (float _f) { return Mathf.RoundToInt(_f).ToString(); };
             }
 
-
+            // Clean up previous graph
             foreach (GameObject gameObject in gameObjectList)
             {
                 Destroy(gameObject);
@@ -231,7 +207,6 @@ namespace grafico
             graphVisualObjectList.Clear();
 
             graphVisual.CleanUp();
-
 
             float graphWidth = graphContainer.sizeDelta.x;
             float graphHeight = graphContainer.sizeDelta.y;
@@ -248,6 +223,7 @@ namespace grafico
             {
                 float xPosition = xSize + xIndex * xSize;
                 float yPosition = ((valueList[i] - yMinimum) / (yMaximum - yMinimum)) * graphHeight;
+
 
                 string tooltipText = getAxisLabelY(valueList[i]);
                 IGraphVisualObject graphVisualObject = graphVisual.CreateGraphVisualObject(new Vector2(xPosition, yPosition), xSize, tooltipText);
@@ -285,7 +261,6 @@ namespace grafico
                 yLabelList.Add(labelY);
                 gameObjectList.Add(labelY.gameObject);
 
-
                 RectTransform dashY = Instantiate(dashTemplateY);
                 dashY.SetParent(dashContainer, false);
                 dashY.gameObject.SetActive(true);
@@ -294,54 +269,21 @@ namespace grafico
             }
         }
 
-        private void UpdateValue(int index, int value)
+        private void UpdateValues()
         {
-            float yMinimumBefore, yMaximumBefore;
-            CalculateYScale(out yMinimumBefore, out yMaximumBefore);
+            // Atualiza apenas o último valor da lista
+            valueList[currentIndex] = Mathf.RoundToInt(receivedPressao);
 
-            valueList[index] = value;
-
-            float graphWidth = graphContainer.sizeDelta.x;
-            float graphHeight = graphContainer.sizeDelta.y;
-
-            float yMinimum, yMaximum;
-            CalculateYScale(out yMinimum, out yMaximum);
-
-            bool yScaleChanged = yMinimumBefore != yMinimum || yMaximumBefore != yMaximum;
-
-            if (!yScaleChanged)
+            // Propaga os valores para os pontos anteriores
+            for (int i = currentIndex + 1; i < valueList.Count; i++)
             {
-
-                float xPosition = xSize + index * xSize;
-                float yPosition = ((value - yMinimum) / (yMaximum - yMinimum)) * graphHeight;
-
-
-                string tooltipText = getAxisLabelY(value);
-                graphVisualObjectList[index].SetGraphVisualObjectInfo(new Vector2(xPosition, yPosition), xSize, tooltipText);
+                valueList[i] = valueList[i - 1];
             }
-            else
-            {
 
-                int xIndex = 0;
-                for (int i = Mathf.Max(valueList.Count - maxVisibleValueAmount, 0); i < valueList.Count; i++)
-                {
-                    float xPosition = xSize + xIndex * xSize;
-                    float yPosition = ((valueList[i] - yMinimum) / (yMaximum - yMinimum)) * graphHeight;
-
-
-                    string tooltipText = getAxisLabelY(valueList[i]);
-                    graphVisualObjectList[xIndex].SetGraphVisualObjectInfo(new Vector2(xPosition, yPosition), xSize, tooltipText);
-
-                    xIndex++;
-                }
-
-                for (int i = 0; i < yLabelList.Count; i++)
-                {
-                    float normalizedValue = i * 1f / yLabelList.Count;
-                    yLabelList[i].GetComponent<Text>().text = getAxisLabelY(yMinimum + (normalizedValue * (yMaximum - yMinimum)));
-                }
-            }
+            // Decrementa o índice para atualizar o próximo ponto anterior
+            currentIndex = (currentIndex - 1 + valueList.Count) % valueList.Count;
         }
+
 
         private void CalculateYScale(out float yMinimum, out float yMaximum)
         {
@@ -370,12 +312,11 @@ namespace grafico
             yMaximum = yMaximum + (yDifference * 0.2f);
             yMinimum = yMinimum - (yDifference * 0.2f);
 
-
-
-            this.yMinimum = yMinimum;
-            this.yMaximum = yMaximum;
+            if (startYScaleAtZero)
+            {
+                yMinimum = 0f;
+            }
         }
-
 
         private interface IGraphVisual
         {
@@ -385,7 +326,6 @@ namespace grafico
 
         }
 
-
         private interface IGraphVisualObject
         {
 
@@ -393,6 +333,7 @@ namespace grafico
             void CleanUp();
 
         }
+
 
         private class BarChartVisual : IGraphVisual
         {
@@ -434,7 +375,6 @@ namespace grafico
                 rectTransform.anchorMax = new Vector2(0, 0);
                 rectTransform.pivot = new Vector2(.5f, 0f);
 
-                // Add Button_UI Component which captures UI Mouse Events
                 Button_UI barButtonUI = gameObject.AddComponent<Button_UI>();
 
                 return gameObject;
@@ -461,12 +401,12 @@ namespace grafico
 
                     Button_UI barButtonUI = barGameObject.GetComponent<Button_UI>();
 
-
+                    // Show Tooltip on Mouse Over
                     barButtonUI.MouseOverOnceFunc = () => {
                         ShowTooltip_Static(tooltipText, graphPosition);
                     };
 
-
+                    // Hide Tooltip on Mouse Out
                     barButtonUI.MouseOutOnceFunc = () => {
                         HideTooltip_Static();
                     };
@@ -481,7 +421,6 @@ namespace grafico
             }
 
         }
-
 
         private class LineGraphVisual : IGraphVisual
         {
@@ -538,7 +477,7 @@ namespace grafico
                 rectTransform.anchorMin = new Vector2(0, 0);
                 rectTransform.anchorMax = new Vector2(0, 0);
 
-
+                // Add Button_UI Component which captures UI Mouse Events
                 Button_UI dotButtonUI = gameObject.AddComponent<Button_UI>();
 
                 return gameObject;
@@ -560,6 +499,7 @@ namespace grafico
                 rectTransform.localEulerAngles = new Vector3(0, 0, UtilsClass.GetAngleFromVectorFloat(dir));
                 return gameObject;
             }
+
 
             public class LineGraphVisualObject : IGraphVisualObject
             {
@@ -596,12 +536,12 @@ namespace grafico
 
                     Button_UI dotButtonUI = dotGameObject.GetComponent<Button_UI>();
 
-
+                    // Show Tooltip on Mouse Over
                     dotButtonUI.MouseOverOnceFunc = () => {
                         ShowTooltip_Static(tooltipText, graphPosition);
                     };
 
-
+                    // Hide Tooltip on Mouse Out
                     dotButtonUI.MouseOutOnceFunc = () => {
                         HideTooltip_Static();
                     };
@@ -638,71 +578,7 @@ namespace grafico
 
         }
 
-
-
-        private int currentIndex = 0; // Controla o índice do valor mais recente na lista
-        private float elapsedTime = 0f; // Controla o tempo decorrido desde a última atualização
-
-
-        private void Update()
-        {
-            try
-            {
-                if (serialController != null)
-                {
-                    float lastAltura = serialController.GetLastAltura();
-                    UpdateElapsedTime();
-                    if (elapsedTime >= 1f)
-                    {
-                        UpdateGraphWithNewValue(lastAltura);
-                        ResetElapsedTime();
-                    }
-                }
-            }
-            catch (System.Exception)
-            {
-
-            }
-        }
-
-
-
-        private void UpdateGraphWithValue(float value)
-        {
-            float xPosition = 0;
-            float yPosition = ((value - yMinimum) / (yMaximum - yMinimum)) * graphHeight;
-
-            Debug.Log("Valor recebido: " + value + " | yPosition: " + yPosition); // Verifica os valores
-
-            IGraphVisualObject graphVisualObject = graphVisual.CreateGraphVisualObject(new Vector2(xPosition, yPosition), xSize, value.ToString());
-            graphVisualObjectList.Add(graphVisualObject);
-        }
-
-
-        private void UpdateElapsedTime()
-        {
-            elapsedTime += Time.deltaTime;
-        }
-
-        private void ResetElapsedTime()
-        {
-            elapsedTime = 0f;
-        }
-
-        private void UpdateGraphWithNewValue(float newValue)
-        {
-            for (int i = valueList.Count - 1; i > 0; i--)
-            {
-                int targetIndex = (currentIndex + i) % valueList.Count;
-                int sourceIndex = (currentIndex + i - 1) % valueList.Count;
-                valueList[targetIndex] = valueList[sourceIndex];
-            }
-
-
-            valueList[currentIndex] = Mathf.RoundToInt(newValue);
-        }
-
-
     }
+
 
 }
