@@ -9,8 +9,8 @@ namespace grafico
     public class mainSerial : MonoBehaviour, IDataReceiver
     {
         private SerialPort serialPort;
-        public string serialPortName = "COM3"; 
-        public int baudRate = 115200; 
+        public string serialPortName = "COM4"; 
+        public int baudRate = 9600; 
 
        // private Window_Graph_Aceleracao graphAceleracao;
         //private Window_Graph_Altura graphAltura;
@@ -21,7 +21,7 @@ namespace grafico
         private float lastPressao;
         private float lastTemperatura;
         private float lastLatitude;
-        private float lastLongitude;
+        private float lastVelocidadeRotacional;
 
         public event System.Action<float, float, float> OnDataReceived;
 
@@ -73,29 +73,32 @@ namespace grafico
                     if (values.Length >= 3) 
                     {
 
-                        float altura = float.Parse(values[0], CultureInfo.InvariantCulture.NumberFormat); //altitude barometro,
-
                         float aceleracaox = float.Parse(values[0], CultureInfo.InvariantCulture.NumberFormat);
                         float aceleracaoy = float.Parse(values[1], CultureInfo.InvariantCulture.NumberFormat);
                         float aceleracaoz = float.Parse(values[2], CultureInfo.InvariantCulture.NumberFormat);
                         float aceleracao = Mathf.Sqrt((aceleracaox * aceleracaox) + (aceleracaoy * aceleracaoy) + (aceleracaoz * aceleracaoz));
 
-                        float pressao = float.Parse(values[0], CultureInfo.InvariantCulture.NumberFormat);
+                        float vrx = float.Parse(values[3], CultureInfo.InvariantCulture.NumberFormat);
+                        float vry = float.Parse(values[4], CultureInfo.InvariantCulture.NumberFormat);
+                        float vrz = float.Parse(values[5], CultureInfo.InvariantCulture.NumberFormat);
+                        float VelocidadeRotacional = Mathf.Sqrt((vrx * vrx) + (vry * vry) + (vrz * vrz));
 
-                        float temperatura = float.Parse(values[1], CultureInfo.InvariantCulture.NumberFormat);
+                        float temperatura = float.Parse(values[6], CultureInfo.InvariantCulture.NumberFormat);
+
+                        float pressao = float.Parse(values[0], CultureInfo.InvariantCulture.NumberFormat);
 
                         float latitude = float.Parse(values[1], CultureInfo.InvariantCulture.NumberFormat);
 
-                        float longitude = float.Parse(values[1], CultureInfo.InvariantCulture.NumberFormat);
+                        float altura = float.Parse(values[0], CultureInfo.InvariantCulture.NumberFormat);
 
-                        Debug.Log("Altura: " + altura + " Aceleracao: " + aceleracao + " Pressão: " + pressao + "Temperatura" + temperatura + "Latitude" + latitude + "Longitude" + longitude);
+                        Debug.Log("Altura: " + altura + " Aceleracao: " + aceleracao + " Pressão: " + pressao + "Temperatura" + temperatura + "Latitude" + latitude + "VelocidadeRotacional" + VelocidadeRotacional);
 
                         lastAltura = altura;
                         lastAceleracao = aceleracao;
                         lastPressao = pressao;
                         lastTemperatura = temperatura;
                         lastLatitude= latitude;
-                        lastLongitude= longitude;
+                        lastVelocidadeRotacional= VelocidadeRotacional;
 
                         //graphAltura.ReceiveAltura(altura);
                        // graphAceleracao.ReceiveAceleracao(aceleracao);
@@ -136,9 +139,9 @@ namespace grafico
             return lastLatitude;
         }
 
-        public float GetLastLongitude()
+        public float GetLastVelocidadeRotacional()
         {
-            return lastLongitude;
+            return lastVelocidadeRotacional;
         }
 
 

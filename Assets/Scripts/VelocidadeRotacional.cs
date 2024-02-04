@@ -5,9 +5,9 @@ using UnityEngine.UI;
 
 namespace grafico
 {
-    public class Longitude : MonoBehaviour
+    public class VelocidadeRotacional : MonoBehaviour
     {
-        public Text valorLongitude; 
+        public Text valorVelocidadeRotacional; 
 
         private mainSerial serialController; 
 
@@ -15,18 +15,19 @@ namespace grafico
         {
             
             serialController = FindObjectOfType<mainSerial>();
-            StartCoroutine(UpdateLongitudeText());
+            StartCoroutine(UpdateVelocidadeRotacionalText());
         }
 
-        private IEnumerator UpdateLongitudeText()
+        private IEnumerator UpdateVelocidadeRotacionalText()
         {
             while (true)
             {
                 if (serialController != null)
                 {
-                    float lastLongitude = serialController.GetLastLongitude();
+                    float lastVelocidadeRotacional = serialController.GetLastVelocidadeRotacional();
 
-                    valorLongitude.text = lastLongitude.ToString("F2") + " º"; 
+
+                    valorVelocidadeRotacional.text = lastVelocidadeRotacional.ToString("F2") + " rad/s"; 
 
                     yield return new WaitForSeconds(1f);
                 }
