@@ -25,6 +25,15 @@ namespace grafico
 
         public event System.Action<float, float, float> OnDataReceived;
 
+        public struct SensorStatus
+        {
+            public float sensor1;
+            public float sensor2;
+        }
+
+        private SensorStatus sensorStatus;
+
+
         private void Start()
         {
            
@@ -67,46 +76,45 @@ namespace grafico
                 try
                 {
                     string data = serialPort.ReadLine();
-                    Debug.Log("Dados recebidos: " + data); 
-                    string[] values = data.Split(',');
+                    Debug.Log("Dados recebidos: " + data);
 
-                    if (values.Length >= 3) 
-                    {
 
-                        float aceleracaox = float.Parse(values[0], CultureInfo.InvariantCulture.NumberFormat);
-                        float aceleracaoy = float.Parse(values[1], CultureInfo.InvariantCulture.NumberFormat);
-                        float aceleracaoz = float.Parse(values[2], CultureInfo.InvariantCulture.NumberFormat);
-                        float aceleracao = Mathf.Sqrt((aceleracaox * aceleracaox) + (aceleracaoy * aceleracaoy) + (aceleracaoz * aceleracaoz));
+                    string[] values = data.Split('|');
 
-                        float vrx = float.Parse(values[3], CultureInfo.InvariantCulture.NumberFormat);
-                        float vry = float.Parse(values[4], CultureInfo.InvariantCulture.NumberFormat);
-                        float vrz = float.Parse(values[5], CultureInfo.InvariantCulture.NumberFormat);
-                        float VelocidadeRotacional = Mathf.Sqrt((vrx * vrx) + (vry * vry) + (vrz * vrz));
+                    float aceleracaox = float.Parse(values[0], CultureInfo.InvariantCulture.NumberFormat);
+                    float aceleracaoy = float.Parse(values[], CultureInfo.InvariantCulture.NumberFormat);
+                    float aceleracaoz = float.Parse(values[2], CultureInfo.InvariantCulture.NumberFormat);
+                    float aceleracao = Mathf.Sqrt((aceleracaox * aceleracaox) + (aceleracaoy * aceleracaoy) + (aceleracaoz * aceleracaoz));
 
-                        float temperatura = float.Parse(values[6], CultureInfo.InvariantCulture.NumberFormat);
+                    float vrx = float.Parse(values[3], CultureInfo.InvariantCulture.NumberFormat);
+                    float vry = float.Parse(values[4], CultureInfo.InvariantCulture.NumberFormat);
+                    float vrz = float.Parse(values[5], CultureInfo.InvariantCulture.NumberFormat);
+                    float VelocidadeRotacional = Mathf.Sqrt((vrx * vrx) + (vry * vry) + (vrz * vrz));
 
-                        float pressao = float.Parse(values[0], CultureInfo.InvariantCulture.NumberFormat);
+                    float temperatura = float.Parse(values[6], CultureInfo.InvariantCulture.NumberFormat);
 
-                        float latitude = float.Parse(values[1], CultureInfo.InvariantCulture.NumberFormat);
+                    //float pressao = float.Parse(values[0], CultureInfo.InvariantCulture.NumberFormat);
 
-                        float altura = float.Parse(values[0], CultureInfo.InvariantCulture.NumberFormat);
+                    //float latitude = float.Parse(values[1], CultureInfo.InvariantCulture.NumberFormat);
 
-                        Debug.Log("Altura: " + altura + " Aceleracao: " + aceleracao + " Pressão: " + pressao + "Temperatura" + temperatura + "Latitude" + latitude + "VelocidadeRotacional" + VelocidadeRotacional);
+                    //float altura = float.Parse(values[0], CultureInfo.InvariantCulture.NumberFormat);
 
-                        lastAltura = altura;
-                        lastAceleracao = aceleracao;
-                        lastPressao = pressao;
-                        lastTemperatura = temperatura;
-                        lastLatitude= latitude;
-                        lastVelocidadeRotacional= VelocidadeRotacional;
+                    //Debug.Log("Altura: " + altura + " Aceleracao: " + aceleracao + " Pressão: " + pressao + "Temperatura" + temperatura + "Latitude" + latitude + "VelocidadeRotacional" + VelocidadeRotacional);
 
-                        //graphAltura.ReceiveAltura(altura);
-                       // graphAceleracao.ReceiveAceleracao(aceleracao);
-                        //graphPressao.ReceivePressao(pressao);
+                    lastAltura = altura;
+                    lastAceleracao = aceleracao;
+                    //lastPressao = pressao;
+                    //lastTemperatura = temperatura;
+                    //lastLatitude= latitude;
+                    //lastVelocidadeRotacional= VelocidadeRotacional;
 
-                        // Notifica os observadores sobre os dados recebidos
-                        OnDataReceived?.Invoke(altura, aceleracao, pressao);
-                    }
+                    ////graphAltura.ReceiveAltura(altura);
+                    //// graphAceleracao.ReceiveAceleracao(aceleracao);
+                    ////graphPressao.ReceivePressao(pressao);
+
+                    //// Notifica os observadores sobre os dados recebidos
+                    //OnDataReceived?.Invoke(altura, aceleracao, pressao);
+
                 }
                 catch (System.Exception ex)
                 {
