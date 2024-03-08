@@ -69,6 +69,28 @@ namespace grafico
             }
             }
 
+
+        // Função para extrair os valores dos sensores do início da string
+        private SensorStatus ExtractSensorStatus(string data)
+        {
+            SensorStatus sensorStatus = new SensorStatus();
+
+            // Exemplo: Suponha que os valores dos sensores estejam separados por vírgulas no início da string
+            string[] sensorValues = data.Split(',');
+
+            // Atribui os valores aos campos da struct (convertendo para float)
+            if (sensorValues.Length >= 7)
+            {
+                sensorStatus.sensor1 = float.Parse(sensorValues[0], CultureInfo.InvariantCulture.NumberFormat);
+                sensorStatus.sensor2 = float.Parse(sensorValues[1], CultureInfo.InvariantCulture.NumberFormat);
+            }
+            else
+            {
+                Debug.LogWarning("Não foi possível extrair todos os valores dos sensores.");
+            }
+
+            return sensorStatus;
+        }
         private void Update()
         {
             if (serialPort.IsOpen)
@@ -82,7 +104,7 @@ namespace grafico
                     string[] values = data.Split('|');
 
                     float aceleracaox = float.Parse(values[0], CultureInfo.InvariantCulture.NumberFormat);
-                    float aceleracaoy = float.Parse(values[], CultureInfo.InvariantCulture.NumberFormat);
+                    float aceleracaoy = float.Parse(values[1], CultureInfo.InvariantCulture.NumberFormat);
                     float aceleracaoz = float.Parse(values[2], CultureInfo.InvariantCulture.NumberFormat);
                     float aceleracao = Mathf.Sqrt((aceleracaox * aceleracaox) + (aceleracaoy * aceleracaoy) + (aceleracaoz * aceleracaoz));
 
@@ -101,12 +123,12 @@ namespace grafico
 
                     //Debug.Log("Altura: " + altura + " Aceleracao: " + aceleracao + " Pressão: " + pressao + "Temperatura" + temperatura + "Latitude" + latitude + "VelocidadeRotacional" + VelocidadeRotacional);
 
-                    lastAltura = altura;
+                    //lastAltura = altura;
                     lastAceleracao = aceleracao;
                     //lastPressao = pressao;
-                    //lastTemperatura = temperatura;
+                    lastTemperatura = temperatura;
                     //lastLatitude= latitude;
-                    //lastVelocidadeRotacional= VelocidadeRotacional;
+                    lastVelocidadeRotacional= VelocidadeRotacional;
 
                     ////graphAltura.ReceiveAltura(altura);
                     //// graphAceleracao.ReceiveAceleracao(aceleracao);
