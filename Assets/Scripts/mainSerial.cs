@@ -82,7 +82,7 @@ namespace grafico
                     string[] values = data.Split('|');
 
                     float aceleracaox = float.Parse(values[0], CultureInfo.InvariantCulture.NumberFormat);
-                    float aceleracaoy = float.Parse(values[], CultureInfo.InvariantCulture.NumberFormat);
+                    float aceleracaoy = float.Parse(values[1], CultureInfo.InvariantCulture.NumberFormat);
                     float aceleracaoz = float.Parse(values[2], CultureInfo.InvariantCulture.NumberFormat);
                     float aceleracao = Mathf.Sqrt((aceleracaox * aceleracaox) + (aceleracaoy * aceleracaoy) + (aceleracaoz * aceleracaoz));
 
@@ -93,20 +93,21 @@ namespace grafico
 
                     float temperatura = float.Parse(values[6], CultureInfo.InvariantCulture.NumberFormat);
 
-                    //float pressao = float.Parse(values[0], CultureInfo.InvariantCulture.NumberFormat);
+                    //float pressao = float.Parse(values[7], CultureInfo.InvariantCulture.NumberFormat);
 
-                    //float latitude = float.Parse(values[1], CultureInfo.InvariantCulture.NumberFormat);
+                    //float latitude = float.Parse(values[8], CultureInfo.InvariantCulture.NumberFormat);
 
-                    //float altura = float.Parse(values[0], CultureInfo.InvariantCulture.NumberFormat);
+                    //float altura = float.Parse(values[9], CultureInfo.InvariantCulture.NumberFormat);
 
                     //Debug.Log("Altura: " + altura + " Aceleracao: " + aceleracao + " Pressão: " + pressao + "Temperatura" + temperatura + "Latitude" + latitude + "VelocidadeRotacional" + VelocidadeRotacional);
 
-                    lastAltura = altura;
-                    lastAceleracao = aceleracao;
+                    lastAceleracao = aceleracao; //MPU
+                    lastVelocidadeRotacional = VelocidadeRotacional; //MPU
+                    lastTemperatura = temperatura; //MPU E BMP
+
+                    //lastAltura = altura;
                     //lastPressao = pressao;
-                    //lastTemperatura = temperatura;
                     //lastLatitude= latitude;
-                    //lastVelocidadeRotacional= VelocidadeRotacional;
 
                     ////graphAltura.ReceiveAltura(altura);
                     //// graphAceleracao.ReceiveAceleracao(aceleracao);
