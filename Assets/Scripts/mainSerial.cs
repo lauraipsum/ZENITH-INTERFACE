@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.IO.Ports;
 using System.Globalization;
+using System.Text.RegularExpressions;
+
+using static grafico.mainSerial;
 
 namespace grafico
 {
@@ -67,130 +70,135 @@ namespace grafico
                     Debug.Log("Erro ao abrir Porta Serial");
                 }
             }
-            }
-
-
-        // Função para extrair os valores dos sensores do início da string
-        private SensorStatus ExtractSensorStatus(string data)
-        {
-            SensorStatus sensorStatus = new SensorStatus();
-
-            // Exemplo: Suponha que os valores dos sensores estejam separados por vírgulas no início da string
-            string[] sensorValues = data.Split(',');
-
-            // Atribui os valores aos campos da struct (convertendo para float)
-            if (sensorValues.Length >= 7)
-            {
-                sensorStatus.sensor1 = float.Parse(sensorValues[0], CultureInfo.InvariantCulture.NumberFormat);
-                sensorStatus.sensor2 = float.Parse(sensorValues[1], CultureInfo.InvariantCulture.NumberFormat);
-            }
-            else
-            {
-                Debug.LogWarning("Não foi possível extrair todos os valores dos sensores.");
-            }
-
-            return sensorStatus;
         }
+
+
+
+
+
         private void Update()
-        {
-            if (serialPort.IsOpen)
             {
-                try
+                if (serialPort.IsOpen)
                 {
-                    string data = serialPort.ReadLine();
-                    Debug.Log("Dados recebidos: " + data);
+                    try
+                    {       
+
+                        string data = serialPort.ReadLine();
+
+                        Debug.Log("Dados recebidos: " + data);
+
+                        SensorStatus sensorStatus = new SensorStatus();
+
+                        // Define o padrão regex para encontrar o valor após "Status mpu:"
+                        string pattern = @"Status mpu:\s*([\d.-]+)";
+
+                        // Executa a correspondência usando regex
+                        Match match = Regex.Match(data, pattern);
+
+                        // Verifica se a correspondência foi encontrada
+                        if (match.Success)
+                        {
+                            // Obtém o valor correspondente ao grupo capturado
+                            string valueString = match.Groups[1].Value;
+
+                            // Converte o valor para float e atribui a sensorStatus.sensor1
+                            sensorStatus.sensor1 = float.Parse(valueString, CultureInfo.InvariantCulture.NumberFormat);
+                        }
+                        Debug.Log("STATUS MPU : " + sensorStatus.sensor1);
 
 
-                    string[] values = data.Split('|');
+                        string[] values = data.Split('|');
 
-                    float aceleracaox = float.Parse(values[0], CultureInfo.InvariantCulture.NumberFormat);
-                    float aceleracaoy = float.Parse(values[1], CultureInfo.InvariantCulture.NumberFormat);
-                    float aceleracaoz = float.Parse(values[2], CultureInfo.InvariantCulture.NumberFormat);
-                    float aceleracao = Mathf.Sqrt((aceleracaox * aceleracaox) + (aceleracaoy * aceleracaoy) + (aceleracaoz * aceleracaoz));
+                        float aceleracaox = float.Parse(values[0], CultureInfo.InvariantCulture.NumberFormat);
+                        float aceleracaoy = float.Parse(values[1], CultureInfo.InvariantCulture.NumberFormat);
+                        float aceleracaoz = float.Parse(values[2], CultureInfo.InvariantCulture.NumberFormat);
+                        float aceleracao = Mathf.Sqrt((aceleracaox * aceleracaox) + (aceleracaoy * aceleracaoy) + (aceleracaoz * aceleracaoz));
 
-                    float vrx = float.Parse(values[3], CultureInfo.InvariantCulture.NumberFormat);
-                    float vry = float.Parse(values[4], CultureInfo.InvariantCulture.NumberFormat);
-                    float vrz = float.Parse(values[5], CultureInfo.InvariantCulture.NumberFormat);
-                    float VelocidadeRotacional = Mathf.Sqrt((vrx * vrx) + (vry * vry) + (vrz * vrz));
+                        float vrx = float.Parse(values[3], CultureInfo.InvariantCulture.NumberFormat);
+                        float vry = float.Parse(values[4], CultureInfo.InvariantCulture.NumberFormat);
+                        float vrz = float.Parse(values[5], CultureInfo.InvariantCulture.NumberFormat);
+                        float VelocidadeRotacional = Mathf.Sqrt((vrx * vrx) + (vry * vry) + (vrz * vrz));
 
-                    float temperatura = float.Parse(values[6], CultureInfo.InvariantCulture.NumberFormat);
+                        float temperatura = float.Parse(values[6], CultureInfo.InvariantCulture.NumberFormat);
 
-                    //float pressao = float.Parse(values[0], CultureInfo.InvariantCulture.NumberFormat);
+                        //float pressao = float.Parse(values[7], CultureInfo.InvariantCulture.NumberFormat);
 
-                    //float latitude = float.Parse(values[1], CultureInfo.InvariantCulture.NumberFormat);
+                        //float latitude = float.Parse(values[8], CultureInfo.InvariantCulture.NumberFormat);
 
-                    //float altura = float.Parse(values[0], CultureInfo.InvariantCulture.NumberFormat);
+                        //float altura = float.Parse(values[9], CultureInfo.InvariantCulture.NumberFormat);
 
-                    //Debug.Log("Altura: " + altura + " Aceleracao: " + aceleracao + " Pressão: " + pressao + "Temperatura" + temperatura + "Latitude" + latitude + "VelocidadeRotacional" + VelocidadeRotacional);
+                        //Debug.Log("Altura: " + altura + " Aceleracao: " + aceleracao + " Pressão: " + pressao + "Temperatura" + temperatura + "Latitude" + latitude + "VelocidadeRotacional" + VelocidadeRotacional);
 
-                    //lastAltura = altura;
-                    lastAceleracao = aceleracao;
-                    //lastPressao = pressao;
-                    lastTemperatura = temperatura;
-                    //lastLatitude= latitude;
-                    lastVelocidadeRotacional= VelocidadeRotacional;
 
-                    ////graphAltura.ReceiveAltura(altura);
-                    //// graphAceleracao.ReceiveAceleracao(aceleracao);
-                    ////graphPressao.ReceivePressao(pressao);
+                        lastAceleracao = aceleracao; //MPU
+                        lastVelocidadeRotacional = VelocidadeRotacional; //MPU
+                        lastTemperatura = temperatura; //MPU E BMP
 
-                    //// Notifica os observadores sobre os dados recebidos
-                    //OnDataReceived?.Invoke(altura, aceleracao, pressao);
+                        //lastAltura = altura;
+                        //lastPressao = pressao;
+                        //lastLatitude= latitude;
 
-                }
-                catch (System.Exception ex)
-                {
-                    Debug.LogError("Erro ao ler dados da porta serial: " + ex.Message);
+                        ////graphAltura.ReceiveAltura(altura);
+                        //// graphAceleracao.ReceiveAceleracao(aceleracao);
+                        ////graphPressao.ReceivePressao(pressao);
+
+                        //// Notifica os observadores sobre os dados recebidos
+                        //OnDataReceived?.Invoke(altura, aceleracao, pressao);
+
+                    }
+                    catch (System.Exception ex)
+                    {
+                        Debug.LogError("Erro ao ler dados da porta serial: " + ex.Message);
+                    }
                 }
             }
-        }
 
-        // Métodos para obter o último valor 
-        public float GetLastAltura()
-        {
-            return lastAltura;
-        }
-
-        public float GetLastAceleracao()
-        {
-            return lastAceleracao;
-        }
-
-        public float GetLastPressao()
-        {
-            return lastPressao;
-        }
-        public float GetLastTemperatura()
-        {
-            return lastTemperatura;
-        }
-        public float GetLastLatitude()
-        {
-            return lastLatitude;
-        }
-
-        public float GetLastVelocidadeRotacional()
-        {
-            return lastVelocidadeRotacional;
-        }
-
-
-        public void ReceiveAltura(float altura)
-        {
-        }
-        public void ReceiveAceleracao(float aceleracao)
-        {
-        }
-        public void ReceivePressao(float pressao)
-        {
-        }
-
-        private void OnDestroy()
-        {
-            if (serialPort != null && serialPort.IsOpen)
+            // Métodos para obter o último valor 
+            public float GetLastAltura()
             {
-                serialPort.Close();
+                return lastAltura;
             }
-        }
+
+            public float GetLastAceleracao()
+            {
+                return lastAceleracao;
+            }
+
+            public float GetLastPressao()
+            {
+                return lastPressao;
+            }
+            public float GetLastTemperatura()
+            {
+                return lastTemperatura;
+            }
+            public float GetLastLatitude()
+            {
+                return lastLatitude;
+            }
+
+            public float GetLastVelocidadeRotacional()
+            {
+                return lastVelocidadeRotacional;
+            }
+
+
+            public void ReceiveAltura(float altura)
+            {
+            }
+            public void ReceiveAceleracao(float aceleracao)
+            {
+            }
+            public void ReceivePressao(float pressao)
+            {
+            }
+
+            private void OnDestroy()
+            {
+                if (serialPort != null && serialPort.IsOpen)
+                {
+                    serialPort.Close();
+                }
+            }
     }
 }
