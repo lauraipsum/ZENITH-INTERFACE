@@ -29,13 +29,13 @@ namespace grafico
                 float statusMPU = serialController.GetLastAceleracao();
 
                 // Se o status MPU for 0, torna o objeto "on" invisível e o objeto "off" visível
-                if (statusMPU == 1f)
+                if (statusMPU == 0f)
                 {
                     onObject.SetActive(false);
                     offObject.SetActive(true);
                 }
                 // Se o status MPU for 1, torna o objeto "off" invisível e o objeto "on" visível
-                else if (statusMPU == 0f)
+                else if (statusMPU == 1f)
                 {
                     onObject.SetActive(true);
                     offObject.SetActive(false);
