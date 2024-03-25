@@ -26,15 +26,12 @@ namespace grafico
         private float lastLatitude;
         private float lastVelocidadeRotacional;
 
-        public event System.Action<float, float, float> OnDataReceived;
+        //public event System.Action<float, float, float> OnDataReceived;
 
-        public struct SensorStatus
-        {
-            public float sensor1;
-            public float sensor2;
-        }
+        private float statusMPU = -1; // Variável para armazenar o status MPU
+        private float statusCE = -1; // Variável para armazenar o status ce_ef
 
-        private SensorStatus sensorStatus;
+
 
 
         private void Start()
@@ -62,7 +59,7 @@ namespace grafico
                 try
                 {
                     string data = serialPort.ReadLine();
-                    Debug.Log("Dados reccebidos: " + data);
+                    Debug.Log("Dados recebidos: " + data);
                                                          
                 }
                 catch (System.Exception)
@@ -87,65 +84,25 @@ namespace grafico
 
                         Debug.Log("Dados recebidos: " + data);
 
-                        SensorStatus sensorStatus = new SensorStatus();
 
-                        // Define o padrão regex para encontrar o valor após "Status mpu:"
-                        string pattern = @"Status mpu:\s*([\d.-]+)";
-
-                        // Executa a correspondência usando regex
-                        Match match = Regex.Match(data, pattern);
-
-                        // Verifica se a correspondência foi encontrada
-                        if (match.Success)
-                        {
-                            // Obtém o valor correspondente ao grupo capturado
-                            string valueString = match.Groups[1].Value;
-
-                            // Converte o valor para float e atribui a sensorStatus.sensor1
-                            sensorStatus.sensor1 = float.Parse(valueString, CultureInfo.InvariantCulture.NumberFormat);
-                        }
-                        Debug.Log("STATUS MPU : " + sensorStatus.sensor1);
-
-
-                        string[] values = data.Split('|');
-
-                        float aceleracaox = float.Parse(values[0], CultureInfo.InvariantCulture.NumberFormat);
-                        float aceleracaoy = float.Parse(values[1], CultureInfo.InvariantCulture.NumberFormat);
-                        float aceleracaoz = float.Parse(values[2], CultureInfo.InvariantCulture.NumberFormat);
-                        float aceleracao = Mathf.Sqrt((aceleracaox * aceleracaox) + (aceleracaoy * aceleracaoy) + (aceleracaoz * aceleracaoz));
-
-                        float vrx = float.Parse(values[3], CultureInfo.InvariantCulture.NumberFormat);
-                        float vry = float.Parse(values[4], CultureInfo.InvariantCulture.NumberFormat);
-                        float vrz = float.Parse(values[5], CultureInfo.InvariantCulture.NumberFormat);
-                        float VelocidadeRotacional = Mathf.Sqrt((vrx * vrx) + (vry * vry) + (vrz * vrz));
-
-                        float temperatura = float.Parse(values[6], CultureInfo.InvariantCulture.NumberFormat);
-
-                        //float pressao = float.Parse(values[7], CultureInfo.InvariantCulture.NumberFormat);
-
-                        //float latitude = float.Parse(values[8], CultureInfo.InvariantCulture.NumberFormat);
-
-                        //float altura = float.Parse(values[9], CultureInfo.InvariantCulture.NumberFormat);
-
-                        //Debug.Log("Altura: " + altura + " Aceleracao: " + aceleracao + " Pressão: " + pressao + "Temperatura" + temperatura + "Latitude" + latitude + "VelocidadeRotacional" + VelocidadeRotacional);
-
-
-                        lastAceleracao = aceleracao; //MPU
-                        lastVelocidadeRotacional = VelocidadeRotacional; //MPU
-                        lastTemperatura = temperatura; //MPU E BMP
-
-                        //lastAltura = altura;
-                        //lastPressao = pressao;
-                        //lastLatitude= latitude;
-
-                        ////graphAltura.ReceiveAltura(altura);
-                        //// graphAceleracao.ReceiveAceleracao(aceleracao);
-                        ////graphPressao.ReceivePressao(pressao);
-
-                        //// Notifica os observadores sobre os dados recebidos
-                        //OnDataReceived?.Invoke(altura, aceleracao, pressao);
-
+                    // Verifica se a linha recebida é um status ou dados
+                    if (data.StartsWith("Status"))
+                    {
+                        HandleStatusLine(data);
                     }
+                    else if (data.StartsWith("!"))
+                    {
+                        data = data.Substring(1);
+                        HandleDataLine(data);
+                    }
+                    else
+                    {
+                        // Caso a linha não corresponda a nenhum caso conhecido, apenas ignore
+                        Debug.Log("Linha recebida não reconhecida.");
+                    }
+
+
+                }
                     catch (System.Exception ex)
                     {
                         Debug.LogError("Erro ao ler dados da porta serial: " + ex.Message);
@@ -153,11 +110,97 @@ namespace grafico
                 }
             }
 
-            // Métodos para obter o último valor 
-            public float GetLastAltura()
+        private void HandleStatusLine(string data)
+        {
+            if (data.StartsWith("Status MPU:"))
             {
-                return lastAltura;
+                // Extrair e processar o status MPU
+                string pattern = @"Status MPU:\s*([\d.-]+)";
+                Match match = Regex.Match(data, pattern);
+                if (match.Success)
+                {
+                    string valueString = match.Groups[1].Value;
+                    statusMPU = float.Parse(valueString, CultureInfo.InvariantCulture.NumberFormat);
+                    Debug.Log("STATUS MPU : " + statusMPU);
+
+                }
             }
+            else if (data.StartsWith("Status CE_EF:"))
+            {
+                // Extrair e processar o status MPU
+                string pattern = @"Status CE_EF:\s*([\d.-]+)";
+                Match match = Regex.Match(data, pattern);
+                if (match.Success)
+                {
+                    string valueString = match.Groups[1].Value;
+                    statusCE = float.Parse(valueString, CultureInfo.InvariantCulture.NumberFormat);
+                    Debug.Log("STATUS CE_EF : " + statusCE);
+
+                }
+            }
+        }
+
+        public float GetMPUStatus()
+        {
+            return statusMPU;
+        }
+
+        public float GetCEStatus()
+        {
+            return statusCE;
+        }
+
+        private void HandleDataLine(string data)
+        {
+            string[] values = data.Split(' ');
+
+            float aceleracaox = float.Parse(values[1], CultureInfo.InvariantCulture.NumberFormat);
+            float aceleracaoy = float.Parse(values[2], CultureInfo.InvariantCulture.NumberFormat);
+            float aceleracaoz = float.Parse(values[3], CultureInfo.InvariantCulture.NumberFormat);
+            float aceleracao = Mathf.Sqrt((aceleracaox * aceleracaox) + (aceleracaoy * aceleracaoy) + (aceleracaoz * aceleracaoz));
+
+            //float vrx = float.Parse(values[3], CultureInfo.InvariantCulture.NumberFormat);
+            //float vry = float.Parse(values[4], CultureInfo.InvariantCulture.NumberFormat);
+            //float vrz = float.Parse(values[5], CultureInfo.InvariantCulture.NumberFormat);
+            //float VelocidadeRotacional = Mathf.Sqrt((vrx * vrx) + (vry * vry) + (vrz * vrz));
+
+            //float temperatura = float.Parse(values[6], CultureInfo.InvariantCulture.NumberFormat);
+
+            float pressao = float.Parse(values[0], CultureInfo.InvariantCulture.NumberFormat);
+
+            //float latitude = float.Parse(values[8], CultureInfo.InvariantCulture.NumberFormat);
+
+            //float altura = float.Parse(values[9], CultureInfo.InvariantCulture.NumberFormat);
+
+            //Debug.Log("Altura: " + altura + " Aceleracao: " + aceleracao + " Pressão: " + pressao + "Temperatura" + temperatura + "Latitude" + latitude + "VelocidadeRotacional" + VelocidadeRotacional);
+
+
+            lastAceleracao = aceleracao; //MPU
+
+                                         
+            //lastVelocidadeRotacional = VelocidadeRotacional; //MPU
+                                         
+            //lastTemperatura = temperatura; //MPU E BMP
+
+            //lastAltura = altura;
+            lastPressao = pressao;
+            //lastLatitude= latitude;
+
+            ////graphAltura.ReceiveAltura(altura);
+            //// graphAceleracao.ReceiveAceleracao(aceleracao);
+            ////graphPressao.ReceivePressao(pressao);
+
+            //// Notifica os observadores sobre os dados recebidos
+            //OnDataReceived?.Invoke(altura, aceleracao, pressao);
+        }
+
+            // Métodos para obter o último valor 
+
+
+            public float GetLastAltura()
+                {
+                    return lastAltura;
+                }
 
             public float GetLastAceleracao()
             {

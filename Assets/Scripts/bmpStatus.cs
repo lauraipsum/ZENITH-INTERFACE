@@ -5,7 +5,7 @@ using UnityEngine.UI;
 
 namespace grafico
 {
-    public class mpuStatus : MonoBehaviour
+    public class bmpStatus : MonoBehaviour
     {
         public GameObject onObject;  // Objeto que representa o estado "on"
         public GameObject offObject; // Objeto que representa o estado "off"
@@ -26,29 +26,23 @@ namespace grafico
             if (serialController != null)
             {
                 // Obtém o último status MPU do script mainSerial
-                float statusMPU = serialController.GetMPUStatus();
-
-                // Debug log para verificar o valor recebido do status MPU
-                Debug.Log("Status MPU recebido: " + statusMPU);
+                float statusMPU = serialController.GetLastAceleracao();
 
                 // Se o status MPU for 0, torna o objeto "on" invisível e o objeto "off" visível
-                if (statusMPU == 0f)
+                if (statusMPU == 1f)
                 {
-                    Debug.Log("Status MPU igual a 0. Ativando o objeto off e desativando o objeto on.");
                     onObject.SetActive(false);
                     offObject.SetActive(true);
                 }
                 // Se o status MPU for 1, torna o objeto "off" invisível e o objeto "on" visível
-                else if (statusMPU == 1f)
+                else if (statusMPU == 0f)
                 {
-                    Debug.Log("Status MPU igual a 1. Ativando o objeto on e desativando o objeto off.");
                     onObject.SetActive(true);
                     offObject.SetActive(false);
                 }
                 // Se o status MPU for diferente de 0 ou 1, mantém ambos os objetos visíveis
                 else
                 {
-                    Debug.Log("Status MPU diferente de 0 e 1. Mantendo ambos os objetos visíveis.");
                     onObject.SetActive(true);
                     offObject.SetActive(true);
                 }
